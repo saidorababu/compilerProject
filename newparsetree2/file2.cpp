@@ -8,9 +8,14 @@ int main(int a){
     for(int i=0;i<10;i++){
         a = 1;
     }
+
     if(b) {
         a = 10;
     }
     int x = 11;
+    string s = "hello";
+    c = (s*10);
+
     return 0;
 }
+

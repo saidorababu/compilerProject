@@ -93,7 +93,7 @@ cin { printf("cin\n"); yylval.node = createNode("cin",-1,yytext,"NULL",0,0);  re
 {assignop} {printf("assignop:%s\n", yytext); yylval.node = createNode("assignop",-1,yytext,"NULL",0,0);  return assignmentop; }
 {comparisionop} { ; printf("compop:%s\n", yytext); strcpy(yylval.str,yytext); yylval.node = createNode("comparisionop",-1,yytext,"NULL",0,0);  return comparisionop; }
 {logicalop} { printf("logicalop:%s\n", yytext); return logicalop; }
-int|float|double|char|string|"long long"|short|long { printf("datatype:%s\n", yytext);declared = 1;strcpy(decl, yytext);  yylval.node = createNode("datatype",-1,yytext,yytext,0,0);  return datatype; }
+int|float|double|char|string|"long long"|short|long { printf("datatype:%s\n", yytext);declared = 1; yylval.node = createNode("datatype",-1,yytext,yytext,0,0);  return datatype; }
 {num} { printf("num:%s\n", yytext); yylval.node = createNode("number",atoi(yytext),"NULL","NULL",0,0); return number; }
 {increment} {  ; printf("unary:%s\n", yytext); yylval.node = createNode("unary",-1,yytext,"NULL",0,0);  return unary; }
 {decrement} {  ; printf("unary:%s\n", yytext); yylval.node = createNode("unary",-1,yytext,"NULL",0,0);  return unary; }
