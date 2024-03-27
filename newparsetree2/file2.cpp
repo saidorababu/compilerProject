@@ -1,6 +1,5 @@
 #include<bits/stdc++.h>
 
-
 int main(int a){
     int a = 5,d;
     cin>>a;
@@ -9,7 +8,7 @@ int main(int a){
     for(int i=0;i<10;i++){
         a = 1;
     }
-    if(b == 10) {
+    if(b) {
         a = 10;
     }
     int x = 11;

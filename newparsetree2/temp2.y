@@ -56,7 +56,17 @@
 		// }else{
 		// 	printf("%d.(%s,%d)\n",level, root->label, root->value);
 		// }
-		 printf("%d.(%s,%d,%s,%s)\n",level, root->label,root->value,root->value_str,root->dtype);
+		if(root->value ==-1 && strcmp(root->dtype,"NULL") == 0){
+			if(strcmp(root->value_str,"NULL") == 0){
+				printf("|--%s\n", root->label);
+			}else{
+				printf("|--%s\n", root->value_str);
+			}
+		}
+		else{
+			printf("|--(%s,%d,%s,%s)\n", root->label,root->value,root->value_str,root->dtype);
+		}
+		
 		for(int i = 0;i<root->num_children;i++){
 			printTree(root->children[i],level+1);
 		}
@@ -141,6 +151,7 @@
 %%
 
 program: headers function_declaration program { printf("program No: %d\n",$$); $$ = create_Node("program", -1, "NULL","NULL", 3,$1,$2,$3);if(!head) head = $$;} 
+| function_declaration program { printf("program No: %d\n",$$); $$ = create_Node("program", -1, "NULL","NULL", 2,$1,$2); head = $$;}
 | statement_list program {$$ = create_Node("program", -1, "NULL","NULL", 2,$1,$2); head = $$;}
 | EOL program {$$ = create_Node("program", -1, "NULL","NULL", 1,$2); head = $$;}
 | EOL {$$ = NULL;}
@@ -328,7 +339,7 @@ int main(int argc,char **argv){
 	yyparse();
 	// yyparse();
 	printf("---------------\n");
-	// printTree(head,0);
+	printTree(head,0);
 	printf("---------------\n");
 	display();
 }
