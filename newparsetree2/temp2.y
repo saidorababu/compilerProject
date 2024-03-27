@@ -83,6 +83,16 @@
 			}
 		}
 	}
+	void addFunctionValue(char *name, int value){
+		printf("functionValue111111111111111111111:%s, %d",name ,value);
+		for(int i = 0;i<100;i++){
+			if(strcmp(symbolTable[i].arr,name) == 0){
+				printf("functionValue111111111111111111111:%d",value);
+				symbolTable[i].value = value ;
+				break;
+			}
+		}
+	}
 	struct Pair{
 		char *dtype;
 		int scope;
@@ -132,6 +142,16 @@
 			return;
 		}
 	}
+	void checkfnArguments(TreeNode* a){
+		for(int i = 0;i<100;i++){
+			if(strcmp(symbolTable[i].arr,a->value_str) == 0){
+				if(symbolTable[i].value != a->value){
+					yyerror("Number of arguments mismatch");
+					return;
+				}
+			}
+		}
+	}
 %}
 
 %union {
@@ -144,36 +164,48 @@
 %token EOL
 %error-verbose
 %token<node> PLUS MINUS MUL DIV number if_x else_x while_x for_x return_x printf_x main_x assignmentop comparisionop logicalop datatype unary identifier string character cout cin insert extract header LBRACE RBRACE LPAREN RPAREN SEMICOLON COMMA
-%type<node> E T F assignment_statement dec_assignment statement_list function_declaration declaration_statement id_list insert_statement extract_statement if_statement else_statement if_else_statement while_statement for_statement return_statement cout_statement cin_statement statement headers parameter_list program
+%type<node> E T F function_call arg_list assignment_statement dec_assignment statement_list function_declarations function_declaration declaration_statement id_list insert_statement extract_statement if_statement else_statement if_else_statement while_statement for_statement return_statement cout_statement cin_statement statement headers parameter_list program
 /* rules */
 %%
 
-program: headers function_declaration program { printf("program No: %d\n",$$); $$ = create_Node("program", -1, "NULL","NULL", 3,$1,$2,$3);if(!head) head = $$;} 
-	| function_declaration program { printf("program No: %d\n",$$); $$ = create_Node("program", -1, "NULL","NULL", 2,$1,$2); head = $$;}
-	| statement_list program {$$ = create_Node("program", -1, "NULL","NULL", 2,$1,$2); head = $$;}
-	| EOL program {$$ = create_Node("program", -1, "NULL","NULL", 1,$2); head = $$;}
-	| EOL {$$ = NULL;}
+program: headers function_declarations { printf("program No: %d\n",$$); $$ = create_Node("program", -1, "NULL","NULL", 2,$1,$2);if(!head) head = $$;} 
+	| EOL{$$ = NULL; head = $$;}
 	|;
+function_declarations:
+	function_declaration function_declarations { printf("function_declarations No: %d\n",$$); $$ = create_Node("function_declarations", -1, "NULL","NULL", 2,$1,$2); }
+	| EOL function_declarations { printf("function_declarations No: %d\n",$$); $$ = create_Node("function_declarations", -1, "NULL","NULL", 1,$2); }
+	| EOL { $$ = NULL; }
+	| ;
+
+
 
 headers: header {$$ = create_Node("headers", -1, "NULL","NULL",1,$1);}
-	| headers EOL headers { $$ = create_Node("headers", -1,"NULL","NULL", 2, $1, $3);}
+	| header headers { $$ = create_Node("headers", -1,"NULL","NULL", 2, $1, $2);}
 	| EOL headers { $$ = create_Node("headers", -1, "NULL","NULL",1, $2);}
 	| EOL{ $$ = NULL; };
 
-function_declaration: datatype identifier LPAREN parameter_list RPAREN LBRACE statement_list RBRACE statement_list {printf("Function NO: %d\n",$$); $2->dtype = $1->value_str; $$ = create_Node("function_declaration", -1, "NULL","NULL", 9, $1,$2,$3, $4, $5, $6, $7, $8, $9); };
+function_declaration: datatype identifier LPAREN parameter_list RPAREN LBRACE statement_list RBRACE {
+	printf("Function NO: %d\n",$$);
+	$2->dtype = $1->dtype;
+	$$ = create_Node("function_declaration", -1, "NULL","NULL", 8, $1,$2,$3, $4, $5, $6, $7, $8); 
+	$$->value = $4->value;
+	addEntry($2->value_str,$2->dtype,$2->scope);
+	addFunctionValue($2->value_str, $4->value);
+};
 
 parameter_list: datatype identifier COMMA parameter_list { 
 	$$ = create_Node("parameter_list", -1, "NULL","NULL",4, $1, $2, $3, $4);
 	$2->dtype = $1->dtype;
+	$$->value = $4->value + 1;
 	addEntry($2->value_str,$2->dtype,$2->scope);
 	 }
- | datatype identifier { 
+ | datatype identifier {
 	$2->dtype = $1->dtype;
 	$$ = create_Node("parameter_list", -1, "NULL","NULL",2, $1, $2);
+	$$->value = 1;
 	addEntry($2->value_str,$2->dtype,$2->scope);
  }
-	| EOL {$$ = NULL;}
-	| { $$ = NULL; };
+	| { $$ = create_Node("parameter_list", -1, "NULL","NULL",0); $$->value = 0 };
 
 
 statement_list: 
@@ -193,8 +225,21 @@ statement: declaration_statement { $$ = create_Node("statement", -1, "NULL","NUL
 	| cout_statement {printf("cout_statement\n"); $$ = create_Node("statement", -1, "NULL","NULL",1,$1); }
 	| cin_statement {printf("cin_statement\n"); $$ = create_Node("statement", -1, "NULL","NULL",1,$1); }
 	| return_statement {printf("return_statement\n"); $$ = create_Node("statement", -1, "NULL","NULL",1,$1); }
+	| function_call SEMICOLON {printf("function_call\n"); $$ = create_Node("statement", -1, "NULL","NULL",2,$1,$2); }
 	| error SEMICOLON { $$ = create_Node("error", -1, "NULL","NULL",0); }
 	| EOL { $$ = NULL; };
+
+function_call: identifier LPAREN arg_list RPAREN { 
+		$$ = create_Node("function_call", -1, "NULL","NULL", 4, $1, $2, $3, $4); 
+		$1->value = $3->value;
+		checkfnArguments($1);
+	}	
+	| identifier LPAREN RPAREN { $$ = create_Node("function_call", -1, "NULL","NULL", 3, $1, $2, $3); }
+	;
+
+arg_list: identifier { $$ = create_Node("arg_list", -1, "NULL","NULL", 1, $1); $$->value = 1; }
+	| identifier COMMA arg_list { $$ = create_Node("arg_list", -1, "NULL","NULL", 3, $1, $2, $3); $$->value = $3->value + 1; }	
+	;
 
 if_statement: if_x LPAREN E RPAREN LBRACE statement_list RBRACE { $$ = create_Node("if_statement", -1,"NULL","NULL", 7,$1,$2,$3,$4,$5,$6,$7);}
 | if_x LPAREN E RPAREN  statement { $$ = create_Node("if_statement", -1,"NULL","NULL", 5,$1,$2,$3,$4,$5);}
@@ -333,7 +378,7 @@ int main(int argc,char **argv){
 	yyparse();
 	// yyparse();
 	printf("---------------\n");
-	// printTree(head,0);
+	printTree(head,0);
 	printf("---------------\n");
 	display();
 }

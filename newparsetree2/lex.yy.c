@@ -859,7 +859,7 @@ YY_RULE_SETUP
 case 17:
 YY_RULE_SETUP
 #line 96 "temp2.l"
-{ printf("datatype:%s\n", yytext);declared = 1;strcpy(decl, yytext);  yylval.node = createNode("datatype",-1,yytext,yytext,0,0);  return datatype; }
+{ printf("datatype:%s\n", yytext);declared = 1; yylval.node = createNode("datatype",-1,yytext,yytext,0,0);  return datatype; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
@@ -1886,10 +1886,10 @@ void installID(char *text)
 void display()
 {
 	printf("\nSymbol Table\n");
-	printf("Symbol\t\tscope\t\tdtype\n");
+	printf("Symbol\t\t\tscope\t\t\tdtype\t\t\tvalue\n");
 	for (int i = 0; i < up; i++)
 	{
-		printf("%s\t\t%d\t\t%s\n", symbolTable[i].arr,symbolTable[i].scope, symbolTable[i].dtype);
+		printf("%s\t\t\t%d\t\t\t%s\t\t\t%d\n", symbolTable[i].arr,symbolTable[i].scope, symbolTable[i].dtype,symbolTable[i].value);
 	}
 }
 int yywrap()

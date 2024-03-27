@@ -141,10 +141,10 @@ void installID(char *text)
 void display()
 {
 	printf("\nSymbol Table\n");
-	printf("Symbol\t\tscope\t\tdtype\n");
+	printf("Symbol\t\t\tscope\t\t\tdtype\t\t\tvalue\n");
 	for (int i = 0; i < up; i++)
 	{
-		printf("%s\t\t%d\t\t%s\n", symbolTable[i].arr,symbolTable[i].scope, symbolTable[i].dtype);
+		printf("%s\t\t\t%d\t\t\t%s\t\t\t%d\n", symbolTable[i].arr,symbolTable[i].scope, symbolTable[i].dtype,symbolTable[i].value);
 	}
 }
 int yywrap()
