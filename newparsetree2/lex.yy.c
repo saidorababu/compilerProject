@@ -794,7 +794,7 @@ YY_RULE_SETUP
 case 4:
 YY_RULE_SETUP
 #line 83 "temp2.l"
-{ printf("if\n");  yylval.node = createNode("if",-1,yytext,"NULL",0,0);  return if_x; }
+{ printf("if\n");  yylval.node = createNode("if",-1,yytext,"NULL",0,0); return if_x; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
@@ -804,7 +804,7 @@ YY_RULE_SETUP
 case 6:
 YY_RULE_SETUP
 #line 85 "temp2.l"
-{ printf("while\n"); yylval.node = createNode("while",-1,yytext,"NULL",0,0);  return while_x; }
+{ printf("while\n"); yylval.node = createNode("while",-1,yytext,"NULL",0,0);   return while_x; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
@@ -824,7 +824,7 @@ YY_RULE_SETUP
 case 10:
 YY_RULE_SETUP
 #line 89 "temp2.l"
-{ printf("cout\n"); yylval.node = createNode("cout",-1,yytext,"NULL",0,0);  return cout; }
+{ printf("cout\n"); yylval.node = createNode("cout",-1,yytext,"NULL",0,0);   return cout; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
@@ -859,7 +859,7 @@ YY_RULE_SETUP
 case 17:
 YY_RULE_SETUP
 #line 96 "temp2.l"
-{ printf("datatype:%s\n", yytext);declared = 1; yylval.node = createNode("datatype",-1,yytext,yytext,0,0);  return datatype; }
+{ printf("datatype:%s\n", yytext);declared = 1;yylval.node = createNode("datatype",-1,yytext,yytext,0,0);  return datatype; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP

@@ -39,28 +39,62 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     declaratio = 258,
-     identifier = 259,
-     unary = 260,
-     operator = 261,
-     number = 262,
-     assignmentop = 263,
-     comparisionop = 264,
-     logicalop = 265,
-     while_x = 266,
-     for_x = 267,
-     if_x = 268,
-     main_x = 269,
-     printf_x = 270,
+     EOL = 258,
+     PLUS = 259,
+     MINUS = 260,
+     MUL = 261,
+     DIV = 262,
+     number = 263,
+     AND = 264,
+     OR = 265,
+     NOT = 266,
+     if_x = 267,
+     else_x = 268,
+     while_x = 269,
+     for_x = 270,
      return_x = 271,
-     new_line = 272
+     printf_x = 272,
+     main_x = 273,
+     assignmentop = 274,
+     comparisionop = 275,
+     logicalop = 276,
+     datatype = 277,
+     unary = 278,
+     identifier = 279,
+     string = 280,
+     character = 281,
+     cout = 282,
+     cin = 283,
+     insert = 284,
+     extract = 285,
+     header = 286,
+     LBRACE = 287,
+     RBRACE = 288,
+     LPAREN = 289,
+     RPAREN = 290,
+     SEMICOLON = 291,
+     COMMA = 292
    };
 #endif
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef int YYSTYPE;
+typedef union YYSTYPE
+{
+
+/* Line 1676 of yacc.c  */
+#line 252 "temp2.y"
+
+    int num;
+    char *str;
+	struct TreeNode *node;
+
+
+
+/* Line 1676 of yacc.c  */
+#line 97 "temp2.tab.h"
+} YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

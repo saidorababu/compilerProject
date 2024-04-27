@@ -57,23 +57,16 @@ letter [a-zA-Z]
 digit [0-9] 
 id {letter}({letter}|{digit})* 
 comparisionop (<=|>=|==|!=|<|>) 
-logicalop (&&|[|][|])
-leftshift (<<) 
-rightshi (>>) 
 plus [+] 
 minus [-] 
 mult [*] 
 div [/] 
-num ({digit}+) 
-float ({num}\.{num}) 
-arithmeticop ({plus}|{minus}|{mult}|{div}) 
+num ({digit}+)
 increment {plus}{plus} 
 decrement {minus}{minus} 
 assignop = 
 string (\"(\\.|[^\\"])*\") 
-character (\'(\\.|[^\\'])*\')
-keyword (if|else|const|while|for|int|float|return|void|main|char|"long long"|double|short|long|unsigned|signed|define|struct|enum|typedef|sizeof|sta c|register|auto|break|case|con nue|default|do|goto|switch|cout|cin|endl|bool|using|namespace|std|include|iostream|vector|map|set|queue|stack|push_back|pop_back|pop|push|top|front|priority_queue) 
-inval (({digit}+{id})) 
+character (\'(\\.|[^\\'])*\') 
 comment (\/\/.*|\/\*([^*]|(\*+[^*/]))*\*+\/[\n]*)
 
 %%
@@ -92,7 +85,9 @@ cin { printf("cin\n"); yylval.node = createNode("cin",-1,yytext,"NULL",0,0);  re
 ">>" { printf("extract\n"); yylval.node = createNode(">>",-1,yytext,"NULL",0,0);  return extract; }
 {assignop} {printf("assignop:%s\n", yytext); yylval.node = createNode("assignop",-1,yytext,"NULL",0,0);  return assignmentop; }
 {comparisionop} { ; printf("compop:%s\n", yytext); strcpy(yylval.str,yytext); yylval.node = createNode("comparisionop",-1,yytext,"NULL",0,0);  return comparisionop; }
-{logicalop} { printf("logicalop:%s\n", yytext); return logicalop; }
+&& { ; printf("AND:%s\n", yytext); yylval.node = createNode("AND",-1,yytext,"NULL",0,0);  return AND; }
+\|\| { ; printf("OR:%s\n", yytext); yylval.node = createNode("OR",-1,yytext,"NULL",0,0);  return OR; }
+! { ; printf("NOT:%s\n", yytext); yylval.node = createNode("NOT",-1,yytext,"NULL",0,0);  return NOT; }
 int|float|double|char|string|"long long"|short|long { printf("datatype:%s\n", yytext);declared = 1;yylval.node = createNode("datatype",-1,yytext,yytext,0,0);  return datatype; }
 {num} { printf("num:%s\n", yytext); yylval.node = createNode("number",atoi(yytext),"NULL","NULL",0,0); return number; }
 {increment} {  ; printf("unary:%s\n", yytext); yylval.node = createNode("unary",-1,yytext,"NULL",0,0);  return unary; }
@@ -106,6 +101,7 @@ int|float|double|char|string|"long long"|short|long { printf("datatype:%s\n", yy
 {minus} { yylval.node = createNode("minus",-1,yytext,"NULL",0,0); return MINUS;}
 {mult} { yylval.node = createNode("mult",-1,yytext,"NULL",0,0); return MUL;}
 {div} { yylval.node = createNode("div",-1,yytext,"NULL",0,0); return DIV;}
+
 "{" { printf("Lbrace:%s\n",yytext); currscope++; yylval.node = createNode("{",-1,yytext,"NULL",0,0);  return LBRACE; }
 "}" { currscope--;printf("Rbrace:%s\n",yytext); yylval.node = createNode("}",-1,yytext,"NULL",0,0);   return RBRACE; }
 "(" {printf ("LPAREN: %s, line: %d\n", yytext, yylineno); currscope++; yylval.node = createNode("LPAREN",-1,yytext,"NULL",0,0); return LPAREN;}

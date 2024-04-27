@@ -15,6 +15,94 @@
 	};
 	extern struct entry symbolTable[100];
 
+	typedef struct threeAddrCode{
+		char *result;
+		char* operation;
+		char* op1;
+		char* op2;
+	} threeAddrCode;
+
+
+	threeAddrCode* createCode(char* result, char* operation, char* op1, char* op2){
+		threeAddrCode* code = (threeAddrCode*)malloc(sizeof(threeAddrCode));
+		code->result = (char*)malloc(strlen(result)+1);
+		strcpy(code->result, result);
+		code->operation = (char*)malloc(strlen(operation)+1);
+		strcpy(code->operation, operation);
+		code->op1 = (char*)malloc(strlen(op1)+1);
+		strcpy(code->op1, op1);
+		code->op2 = (char*)malloc(strlen(op2)+1);
+		strcpy(code->op2, op2);
+		return code;
+	}
+
+	void printCode(threeAddrCode* code){
+		printf("%s = %s %s %s\n", code->result, code->op1, code->operation, code->op2);
+	}
+
+	List* newList(int i){
+		List* list = (List*)malloc(sizeof(List));
+		list->curr = i;
+		list->next = NULL;
+		return list;
+	}
+
+	List* mergeList(List* list1, List* list2){
+		List* temp = list1;
+		while(temp->next != NULL){
+			temp = temp->next;
+		}
+		temp->next = list2;
+		return list1;
+	}
+	int tempVarNo = 1;
+	struct threeAddrCode* icg[1000];
+	int icgIndex = 0;
+	void generateCode(char* operation, char* op1, char* op2, char* result){
+		icg[icgIndex++] = createCode(result, operation, op1, op2);
+	}
+
+	char* new_label(){
+		char* label = (char*)malloc(10);
+		sprintf(label, "L%d", tempVarNo++);
+		return label;
+	}
+	char* new_temp(){
+		char* temp = (char*)malloc(10);
+		sprintf(temp, "t%d", tempVarNo++);
+		return temp;
+	}
+	void backpatch(List* list, int label){
+		List* temp = list;
+		while(temp != NULL){
+			char* index = (char*)malloc(10);
+			sprintf(index, "L%d", temp->curr);
+			icg[temp->curr]->result = (char*)malloc(10);
+			strcpy(icg[temp->curr]->result, index);
+			temp = temp->next;
+		}
+	}
+	void displayICG(){
+		printf("Intermediate Code Generation\n");
+		for(int i = 0; i < icgIndex; i++){
+			if(icg[i]->operation[0] == 'g'){
+				printf("%2d %s %s\n", i, icg[i]->operation, icg[i]->result);
+			}else if(icg[i]->operation[0] == '='){
+				printf("%2d %s = %s\n", i, icg[i]->result, icg[i]->op1);
+			}else if( icg[i]->operation[0] == 'i'){
+				printf("%2d %s %s %s %s\n", i, icg[i]->operation, icg[i]->op1,icg[i]->op2, icg[i]->result);
+			}else if(icg[i]->operation[0] == 'p'){
+				printf("%2d %s %s \n", i, icg[i]->operation, icg[i]->op1);
+			}else if(icg[i]->operation[0] == 'c'){
+				printf("%2d %s %s %s\n", i, icg[i]->operation , icg[i]->op1 , icg[i]->op2);
+			}else{
+				printf("%2d %s = %s %s %s\n", i, icg[i]->result, icg[i]->op1, icg[i]->operation, icg[i]->op2);
+			}
+		}
+	}
+	
+	
+	// void printTree(struct Node* node, int level);
 	TreeNode *head = NULL;
 	struct TreeNode *create_Node(char *label, int value, char *value_str,char *dtype, int num_children, ...) {
 		struct TreeNode *newNode = (struct TreeNode *)malloc(sizeof(struct TreeNode));
@@ -170,20 +258,23 @@
 %start program
 %token EOL
 %error-verbose
-%token<node> PLUS MINUS MUL DIV number if_x else_x while_x for_x return_x printf_x main_x assignmentop comparisionop logicalop datatype unary identifier string character cout cin insert extract header LBRACE RBRACE LPAREN RPAREN SEMICOLON COMMA
-%type<node> E T F function_call arg_list assignment_statement dec_assignment statement_list function_declarations function_declaration declaration_statement id_list insert_statement extract_statement if_statement else_statement if_else_statement while_statement for_statement return_statement cout_statement cin_statement statement headers parameter_list program
+%token<node> PLUS MINUS MUL DIV number AND OR NOT if_x else_x while_x for_x return_x printf_x main_x assignmentop comparisionop logicalop datatype unary identifier string character cout cin insert extract header LBRACE RBRACE LPAREN RPAREN SEMICOLON COMMA
+%type<node> E T F M N function_call arg_list assignment_statement dec_assignment statement_list function_declarations function_declaration declaration_statement id_list insert_statement extract_statement if_statement while_statement for_statement return_statement cout_statement cin_statement statement headers parameter_list program
 /* rules */
+
 %%
 
 program: headers function_declarations {  $$ = create_Node("program", -1, "NULL","NULL", 2,$1,$2);if(!head) head = $$;} 
-	| EOL{$$ = NULL; head = $$;}
+	| EOL program { $$ = create_Node("program", -1, "NULL","NULL", 1,$2);if(!head) head = $$;}
+	| program EOL { $$ = create_Node("program", -1, "NULL","NULL", 1,$1);if(!head) head = $$;}
+	| EOL { $$ = NULL; }
 	|;
 function_declarations:
 	function_declaration function_declarations { $$ = create_Node("function_declarations", -1, "NULL","NULL", 2,$1,$2); }
-	| EOL function_declarations { $$ = create_Node("function_declarations", -1, "NULL","NULL", 1,$2); }
+	| EOL function_declaration { $$ = create_Node("function_declarations", -1, "NULL","NULL", 1,$2); }
+	| function_declaration EOL { $$ = create_Node("function_declarations", -1, "NULL","NULL", 1,$1); }
 	| EOL { $$ = NULL; }
 	| ;
-
 
 
 headers: header {$$ = create_Node("headers", -1, "NULL","NULL",1,$1);}
@@ -191,7 +282,7 @@ headers: header {$$ = create_Node("headers", -1, "NULL","NULL",1,$1);}
 	| EOL headers { $$ = create_Node("headers", -1, "NULL","NULL",1, $2);}
 	| EOL{ $$ = NULL; };
 
-function_declaration: datatype identifier LPAREN parameter_list RPAREN LBRACE statement_list RBRACE {
+function_declaration: datatype identifier LPAREN parameter_list RPAREN LBRACE statement_list return_statement RBRACE {
 	$2->dtype = $1->dtype;
 	$$ = create_Node("function_declaration", -1, "NULL","NULL", 8, $1,$2,$3, $4, $5, $6, $7, $8); 
 	$$->value = $4->value;
@@ -215,18 +306,24 @@ parameter_list: datatype identifier COMMA parameter_list {
 
 
 statement_list: 
-	statement statement_list { $$ = create_Node("statement_list", -1, "NULL","NULL", 2, $1, $2);}
+	statement M statement_list { 
+			$$ = create_Node("statement_list", -1, "NULL","NULL", 2, $1, $3);
+			backpatch($1->nextList,$2->nextList->curr);
+			$$->nextList = $3->nextList;
+		}
 	|	EOL statement_list { $$ = create_Node("statement_list", -1, "NULL","NULL", 1, $2);}
 	|	EOL {$$ = NULL;}
 	|
 ;
 
+M : {$$ = create_Node("M", -1, "st_if","NULL", 0);$$->nextList = newList(icgIndex);}
+N : {$$ = create_Node("N", -1, "st_if","NULL", 0);$$->nextList = newList(icgIndex);generateCode("goto","","","");}
 
 statement: declaration_statement { $$ = create_Node("statement", -1, "NULL","NULL",1,$1); }
 	| assignment_statement SEMICOLON {printf("assignment_statement\n"); $$ = create_Node("statement", -1,"NULL","NULL",2, $1, $2);}
 	| for_statement {printf("for_statement\n"); $$ = create_Node("statement", -1, "NULL","NULL",1,$1); }
 	| if_statement {printf("if_statement\n"); $$ = create_Node("statement", -1, "NULL","NULL",1,$1); }
-	| if_else_statement {printf("if_else_statement\n"); $$ = create_Node("statement", -1, "NULL","NULL",1,$1); }
+	// | if_else_statement {printf("if_else_statement\n"); $$ = create_Node("statement", -1, "NULL","NULL",1,$1); }
 	| while_statement {printf("while_statement\n"); $$ = create_Node("statement", -1, "NULL","NULL",1,$1); }
 	| cout_statement {printf("cout_statement\n"); $$ = create_Node("statement", -1, "NULL","NULL",1,$1); }
 	| cin_statement {printf("cin_statement\n"); $$ = create_Node("statement", -1, "NULL","NULL",1,$1); }
@@ -247,25 +344,47 @@ arg_list: identifier { $$ = create_Node("arg_list", -1, "NULL","NULL", 1, $1); $
 	| identifier COMMA arg_list { $$ = create_Node("arg_list", -1, "NULL","NULL", 3, $1, $2, $3); $$->value = $3->value + 1; }	
 	;
 
-if_statement: if_x LPAREN E RPAREN LBRACE statement_list RBRACE { $$ = create_Node("if_statement", -1,"NULL","NULL", 7,$1,$2,$3,$4,$5,$6,$7);}
-| if_x LPAREN E RPAREN  statement { $$ = create_Node("if_statement", -1,"NULL","NULL", 5,$1,$2,$3,$4,$5);}
-| if_statement EOL  { $$ = create_Node("if_statement", -1,"NULL","NULL", 1,$1);};
+if_statement: if_x LPAREN E RPAREN LBRACE statement_list RBRACE { $$ = create_Node("if_statement", -1,"NULL","NULL", 7,$1,$2,$3,$4,$5,$6,$7);backpatch($3->trueList,$6->nextList->curr);$$->nextList = mergeList($3->falseList,$7->nextList);}
+	| if_x LPAREN E RPAREN M LBRACE statement_list RBRACE N else_x M LBRACE statement_list RBRACE {
+		$$ = create_Node("if_statement", -1,"NULL","NULL", 13,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13);
+		backpatch($3->trueList,$6->nextList->curr);
+		backpatch($3->falseList,$10->nextList->curr);
+		$$->nextList = mergeList(mergeList($7->nextList,$9->nextList),$13->nextList);
+	}
+
+// if_statement: if_x LPAREN E RPAREN M LBRACE statement_list RBRACE { $$ = create_Node("if_statement", -1,"NULL","NULL", 7,$1,$2,$3,$4,$6,$7,$8);backpatch($3->trueList,$6->nextList->curr);$$->nextList = mergeList($3->falseList,$8->nextList);}
+// | if_x LPAREN E RPAREN  statement { $$ = create_Node("if_statement", -1,"NULL","NULL", 5,$1,$2,$3,$4,$5);}
+// | if_statement EOL  { $$ = create_Node("if_statement", -1,"NULL","NULL", 1,$1);};
 
 
-else_statement: else_x LBRACE statement_list RBRACE { $$ = create_Node("else_statement", -1, "NULL","NULL", 3, $1, $2, $3); }
- | else_x statement { $$ = create_Node("else_statement", -1, "NULL","NULL", 2, $1, $2); }
- | else_statement EOL { $$ = create_Node("else_statement", -1, "NULL","NULL", 1, $1); }
- ;
+// else_statement: else_x LBRACE statement_list RBRACE { $$ = create_Node("else_statement", -1, "NULL","NULL", 3, $1, $2, $3); }
+//  | else_x statement { $$ = create_Node("else_statement", -1, "NULL","NULL", 2, $1, $2); }
+//  | else_statement EOL { $$ = create_Node("else_statement", -1, "NULL","NULL", 1, $1); }
+//  ;
 
-if_else_statement: if_statement else_statement { $$ = create_Node("if_else_statement", -1, "NULL","NULL", 2, $1, $2); };
+// if_else_statement: if_statement N else_statement { $$ = create_Node("if_else_statement", -1, "NULL","NULL", 2, $1, $3); backpatch($1->nextList,$2->nextList->curr); $$->nextList = mergeList($1->nextList,$2->nextList); };
 
-while_statement: while_x LPAREN E RPAREN LBRACE statement_list RBRACE { $$ = create_Node("while_statement", -1, "NULL","NULL", 7, $1, $2, $3, $4, $5, $6, $7); };
+while_statement: while_x M LPAREN E RPAREN M LBRACE statement_list RBRACE {
+	$$ = create_Node("while_statement", -1, "NULL","NULL", 9, $1, $2, $3, $4, $5, $6, $7, $8, $9);
+	backpatch($4->trueList,$7->nextList->curr);
+	backpatch($8->nextList,$2->nextList->curr);
+	$$->nextList = $4->falseList;
+	char *x = malloc(10);
+	sprintf(x,"L%d",$2->nextList->curr);
+	generateCode("goto","","",x);
+ };
 
-for_statement: for_x LPAREN declaration_statement E SEMICOLON E RPAREN LBRACE statement_list RBRACE { $$ = create_Node("for_statement", -1, "NULL","NULL", 9, $1, $2, $3, $4, $5, $6, $7, $8, $9); };
+for_statement: for_x LPAREN declaration_statement E SEMICOLON M E RPAREN LBRACE statement_list RBRACE { 
+	$$ = create_Node("for_statement", -1, "NULL","NULL", 11, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,$11);
+	backpatch($4->nextList,$10->nextList->curr);
+	backpatch($10->nextList,$6->nextList->curr);
+	backpatch($10->nextList,$2->nextList->curr);
+	// $$->nextList = $10->nextList;
+};
 
 
-return_statement: return_x E SEMICOLON { $$ = create_Node("return_statement", -1,"NULL","NULL", 2, $1, $2); }
-| return_x SEMICOLON { $$ = create_Node("return_statement", -1, "NULL","NULL", 2, $1,$2); };
+return_statement: return_x E SEMICOLON { $$ = create_Node("return_statement", -1,"NULL","NULL", 2, $1, $2); generateCode("return", "", "", $2->label) }
+| return_x SEMICOLON { $$ = create_Node("return_statement", -1, "NULL","NULL", 2, $1,$2); generateCode("return", "","", "")};
 
 cout_statement: cout insert_statement SEMICOLON { $$ = create_Node("cout_statement", -1,"NULL","NULL", 2, $1, $2); };
 
@@ -310,6 +429,7 @@ dec_assignment:
 		$1->value = $3->value;
 		$1->dtype = $<node>0->dtype; 
 		addEntry($1->value_str,$1->dtype,$1->scope,$1->value);
+		generateCode("=", $3->label, "", $1->label);
 
 	}
 
@@ -319,12 +439,27 @@ assignment_statement:
 		$1->value = $3->value;
 		checkid($1);
 		checkType($1,$3);
+		generateCode("=", $3->label, "", $1->label);
 	}
 ;
 
 E: identifier assignmentop E  { $$ = create_Node("E", -1,  "NULL","NULL", 3, $1, $2, $3); $1->value = $3->value;  checkid($1); checkType($1,$3); }
 	|	E comparisionop E { $$ = create_Node("E", -1,  "NULL","NULL", 3, $1, $2, $3); checkType($1,$3); 
-
+			$$->trueList = newList(icgIndex);
+			$$->falseList = newList(icgIndex+1);
+			char *x = malloc(strlen($2->label)+strlen($1->label)+strlen($3->label)+1);
+			int k = 0;
+			for(int i = 0;i<strlen($1->label);i++){
+				x[k++] = $1->label[i];
+			}
+			for(int i = 0;i<strlen($2->label);i++){
+				x[k++] = $2->label[i];
+			}
+			for(int i = 0;i<strlen($3->label);i++){
+				x[k++] = $3->label[i];
+			}
+			generateCode("if", x,"goto","");
+			generateCode("goto","","","");
 			if (strcmp($2->value_str, "<=") == 0) {
 				$$->value = $1->value <= $3->value;
 			} else if (strcmp($2->value_str, ">=") == 0) {
@@ -341,13 +476,34 @@ E: identifier assignmentop E  { $$ = create_Node("E", -1,  "NULL","NULL", 3, $1,
 				$$->value = $1->value > $3->value;
 			}
 	}
-	|   E PLUS T { $$ = create_Node("E", $1->value+$3->value, "NULL","NULL", 3, $1, $2, $3); checkType($1,$3); }
-	|   E MINUS T { $$ = create_Node("E", $1->value-$3->value, "NULL","NULL", 3, $1, $2, $3); checkType($1,$3); }
+	|	E AND M E { $$ = create_Node("E", -1,  "NULL","NULL", 3, $1, $2, $3); checkType($1,$3); 
+		if (strcmp($2->value_str, "&&") == 0) {
+			$$->value = $1->value && $3->value;
+		} else if (strcmp($2->value_str, "||") == 0) {
+			$$->value = $1->value || $3->value;
+		}
+		backpatch($1->trueList, $3->nextList->curr);
+		$$->trueList = $4->trueList;
+		$$->falseList = mergeList($1->falseList, $4->falseList);
+	}
+	|	E OR M E { $$ = create_Node("E", -1,  "NULL","NULL", 3, $1, $2, $3); checkType($1,$3); 
+		if (strcmp($2->value_str, "&&") == 0) {
+			$$->value = $1->value && $3->value;
+		} else if (strcmp($2->value_str, "||") == 0) {
+			$$->value = $1->value || $3->value;
+		}
+		backpatch($1->falseList, $3->nextList->curr);
+		$$->falseList = $4->falseList;
+		$$->trueList = mergeList($1->trueList, $4->trueList);
+	}
+	| NOT E { $$ = create_Node("E", !$2->value,  "NULL","NULL", 2, $1, $2); $$->value = !$2->value; $$->trueList = $2->falseList; $$->falseList = $2->trueList; }
+	|   E PLUS T { $$ = create_Node("E", $1->value+$3->value, "NULL","NULL", 3, $1, $2, $3); checkType($1,$3); generateCode("+", $1->label, $3->label, $$->label); }
+	|   E MINUS T { $$ = create_Node("E", $1->value-$3->value, "NULL","NULL", 3, $1, $2, $3); checkType($1,$3); generateCode("-", $1->label, $3->label, $$->label);}
 	|   T { $$ = create_Node("E", $1->value, "NULL","NULL", 1, $1);  $$->value = $1->value; $$->dtype = $1->dtype; }
 	;
 
-T: T MUL F { $$ = create_Node("T", $1->value*$3->value, "NULL","NULL", 3, $1, $2, $3); checkType($1,$3); }
-	|	T DIV F { $$ = create_Node("T", $1->value/$3->value, "NULL","NULL", 3, $1, $2, $3);checkType($1,$3);  }
+T: T MUL F { $$ = create_Node("T", $1->value*$3->value, "NULL","NULL", 3, $1, $2, $3); checkType($1,$3); generateCode("*", $1->label, $3->label, $$->label);}
+	|	T DIV F { $$ = create_Node("T", $1->value/$3->value, "NULL","NULL", 3, $1, $2, $3);checkType($1,$3); generateCode("/", $1->label, $3->label, $$->label);}
 	|	F { $$ = create_Node("T", $1->value, "NULL","NULL", 1, $1); $$->dtype = $1->dtype;  $$->value = $1->value;} 
 	;
 
@@ -355,8 +511,8 @@ F: number { $$ = create_Node("F", -1, "NULL","NULL", 1, $1);  $$->dtype = $1->dt
 	| character { $$ = create_Node("F", -1, "NULL","NULL", 1, $1);  $$->dtype = $1->dtype;  }
 	| LPAREN E RPAREN { $$ = create_Node("F",$2->value, "NULL","NULL", 3, $1, $2, $3);  $$->dtype = $2->dtype;  }
 	| identifier { $$ = create_Node("F", -1, "NULL","NULL", 1, $1); checkid($1);  $$->dtype = $1->dtype; }
-	| unary identifier { $$ = create_Node("F", -1, "NULL","NULL", 2, $1, $2); checkid($2);  $$->dtype = $2->dtype;  }
-	| identifier unary { $$ = create_Node("F", -1, "NULL","NULL", 2, $1, $2); checkid($1);  $$->dtype = $1->dtype; }
+	| unary identifier { $$ = create_Node("F", -1, "NULL","NULL", 2, $1, $2); checkid($2);  $$->dtype = $2->dtype; generateCode($1->value_str, $2->label, "", $2->label); }
+	| identifier unary { $$ = create_Node("F", -1, "NULL","NULL", 2, $1, $2); checkid($1);  $$->dtype = $1->dtype; generateCode($2->value_str, $1->label, "", $1->label); }
 	| string { $$ = create_Node("F", -1, "NULL","NULL", 1, $1); $$->dtype = $1->label;}
 	;
 
@@ -383,7 +539,7 @@ int main(int argc,char **argv){
 		printf("Error: File not found\n");
 		return 1;
 	}
-	// initializeSymbolTable();
+	// initializeSymbolTable()
 	extern char *yytext;
 	yyin=fp;
 	yyparse();
@@ -392,4 +548,7 @@ int main(int argc,char **argv){
 	printTree(head,0);
 	printf("---------------\n");
 	display();
+
+	printf("---------------\n");
+	displayICG();
 }
